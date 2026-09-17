@@ -11,6 +11,8 @@ public interface AuthService {
 
     AuthResponse register(RegisterRequest request);
 
+    AuthResponse createAdmin(RegisterRequest request);
+
     AuthResponse login(LoginRequest request);
 
     List<UserResponse> getAllUsers();

@@ -80,4 +80,15 @@ class AuthServiceIntegrationTests {
             assertThat(user.updatedAt()).isNotNull();
         });
     }
+
+    @Test
+    void createAdminDoesNotRequireAnExistingAdmin() {
+        AuthResponse created = authService.createAdmin(
+                new RegisterRequest("New Admin", "NEW-ADMIN@example.com", "87654321"));
+
+        assertThat(created.role()).isEqualTo("ADMIN");
+        User savedAdmin = userRepository.findByEmail("new-admin@example.com").orElseThrow();
+        assertThat(savedAdmin.getActive()).isTrue();
+        assertThat(passwordEncoder.matches("87654321", savedAdmin.getPassword())).isTrue();
+    }
 }

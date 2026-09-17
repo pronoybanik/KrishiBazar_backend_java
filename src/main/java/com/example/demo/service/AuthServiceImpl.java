@@ -13,16 +13,19 @@ import com.example.demo.dto.UserResponse;
 import com.example.demo.entity.User;
 import com.example.demo.exception.ResourceAlreadyExistsException;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.security.JwtService;
 
 @Service
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -41,6 +44,24 @@ public class AuthServiceImpl implements AuthService {
         user.setActive(true);
 
         return toResponse(userRepository.save(user), "Registration successful");
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse createAdmin(RegisterRequest request) {
+        String email = normalizeEmail(request.email());
+        if (userRepository.existsByEmail(email)) {
+            throw new ResourceAlreadyExistsException("Email already registered");
+        }
+
+        User admin = new User();
+        admin.setName(request.name().trim());
+        admin.setEmail(email);
+        admin.setPassword(passwordEncoder.encode(request.password()));
+        admin.setRole("ADMIN");
+        admin.setActive(true);
+
+        return toResponse(userRepository.save(admin), "Admin created successfully");
     }
 
     @Override
@@ -78,7 +99,8 @@ public class AuthServiceImpl implements AuthService {
                 user.getEmail(),
                 user.getRole(),
                 user.getActive(),
-                message);
+                message,
+                jwtService.createToken(user.getId(), user.getRole()));
     }
 
     private UserResponse toUserResponse(User user) {
