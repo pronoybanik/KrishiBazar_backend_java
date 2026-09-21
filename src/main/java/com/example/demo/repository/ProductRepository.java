@@ -12,4 +12,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     List<Product> findAllByOrderByCreatedAtDesc();
 
     List<Product> findAllByFarmerIdOrderByCreatedAtDesc(UUID farmerId);
+    
+    boolean existsByCategoryId(UUID categoryId);
 }

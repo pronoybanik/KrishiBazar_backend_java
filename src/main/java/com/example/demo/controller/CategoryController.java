@@ -16,60 +16,60 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.ApiResponse;
-import com.example.demo.dto.ProductRequest;
-import com.example.demo.dto.ProductResponse;
-import com.example.demo.service.ProductService;
+import com.example.demo.dto.CategoryRequest;
+import com.example.demo.dto.CategoryResponse;
+import com.example.demo.service.CategoryService;
 
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/v1/products")
-public class ProductController {
+@RequestMapping("/api/v1/categories")
+public class CategoryController {
 
-    private final ProductService productService;
+    private final CategoryService categoryService;
 
-    public ProductController(ProductService productService) {
-        this.productService = productService;
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAll() {
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAll() {
         return ResponseEntity.ok(new ApiResponse<>(true, HttpStatus.OK.value(),
-                "Products fetched successfully", productService.getAll()));
+                "Categories fetched successfully", categoryService.getAll()));
     }
 
-    @GetMapping("/farmer/{farmerId}")
-    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAllByFarmer(
-            @PathVariable UUID farmerId) {
+    @GetMapping("/{categoryId}")
+    public ResponseEntity<ApiResponse<CategoryResponse>> getById(@PathVariable UUID categoryId) {
         return ResponseEntity.ok(new ApiResponse<>(true, HttpStatus.OK.value(),
-                "Farmer products fetched successfully", productService.getAllByFarmerId(farmerId)));
+                "Category fetched successfully", categoryService.getById(categoryId)));
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<ProductResponse>> create(
+    public ResponseEntity<ApiResponse<CategoryResponse>> create(
             Authentication authentication,
-            @Valid @RequestBody ProductRequest request) {
+            @Valid @RequestBody CategoryRequest request) {
         int statusCode = HttpStatus.CREATED.value();
         return ResponseEntity.status(statusCode).body(new ApiResponse<>(true, statusCode,
-                "Product added successfully", productService.create(userId(authentication), request)));
+                "Category created successfully", categoryService.create(userId(authentication), request)));
     }
 
-    @PutMapping("/{productId}")
-    public ResponseEntity<ApiResponse<ProductResponse>> update(
+    @PutMapping("/{categoryId}")
+    public ResponseEntity<ApiResponse<CategoryResponse>> update(
             Authentication authentication,
-            @PathVariable UUID productId,
-            @Valid @RequestBody ProductRequest request) {
+            @PathVariable UUID categoryId,
+            @Valid @RequestBody CategoryRequest request) {
         return ResponseEntity.ok(new ApiResponse<>(true, HttpStatus.OK.value(),
-                "Product updated successfully", productService.update(userId(authentication), productId, request)));
+                "Category updated successfully",
+                categoryService.update(userId(authentication), categoryId, request)));
     }
 
-    @DeleteMapping("/{productId}")
+    @DeleteMapping("/{categoryId}")
     public ResponseEntity<ApiResponse<Void>> delete(
             Authentication authentication,
-            @PathVariable UUID productId) {
-        productService.delete(userId(authentication), productId);
+            @PathVariable UUID categoryId) {
+        categoryService.delete(userId(authentication), categoryId);
         return ResponseEntity.ok(new ApiResponse<>(true, HttpStatus.OK.value(),
-                "Product deleted successfully", null));
+                "Category deleted successfully", null));
     }
 
     private UUID userId(Authentication authentication) {

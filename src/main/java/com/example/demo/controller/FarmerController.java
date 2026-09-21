@@ -50,7 +50,7 @@ public class FarmerController {
     public ResponseEntity<ApiResponse<FarmerProfileResponse>> getProfile(
             Authentication authentication) {
         return ResponseEntity.ok(new ApiResponse<>(true, HttpStatus.OK.value(),
-                "Farmer profile fetched successfully", farmerService.getProfile(userId(authentication))));
+                "User profile fetched successfully", farmerService.getProfile(userId(authentication))));
     }
 
     @PutMapping("/profile")

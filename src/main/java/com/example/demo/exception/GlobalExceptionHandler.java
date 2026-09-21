@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -28,6 +29,16 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(new ApiResponse<>(false, HttpStatus.BAD_REQUEST.value(),
                 "Validation failed", errors));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Object>> handleUnreadableRequest(HttpMessageNotReadableException exception) {
+        String message = "Request body contains an invalid value";
+        String details = exception.getMessage();
+        if (details != null && details.contains("java.util.UUID")) {
+            message = "categoryId must be a valid UUID, for example: 550e8400-e29b-41d4-a716-446655440000";
+        }
+        return errorResponse(HttpStatus.BAD_REQUEST, message);
     }
 
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})

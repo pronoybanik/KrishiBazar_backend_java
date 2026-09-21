@@ -9,7 +9,7 @@ public record FarmerApplicationResponse(
         UUID id,
         UUID userId,
         String farmName,
-        String farmAddress,
+        Address address,
         String phoneNumber,
         String description,
         Status status,

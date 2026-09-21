@@ -1,6 +1,7 @@
 package com.example.demo.dto;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -13,6 +14,7 @@ public record ProductRequest(
         @NotNull @DecimalMin(value = "0.01") BigDecimal price,
         @NotNull @DecimalMin(value = "0.01") BigDecimal quantity,
         @NotBlank @Size(max = 30) String unit,
-        @Size(max = 500) String imageUrl
+        @Size(max = 500) String imageUrl,
+        @NotNull UUID categoryId
 ) {
 }

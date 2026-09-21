@@ -15,4 +15,6 @@ public interface ProductService {
     void delete(UUID farmerId, UUID productId);
 
     List<ProductResponse> getAll();
+
+    List<ProductResponse> getAllByFarmerId(UUID farmerId);
 }

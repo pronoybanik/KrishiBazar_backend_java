@@ -41,8 +41,16 @@ public class FarmerApplication {
     @Column(nullable = false, length = 150)
     private String farmName;
 
-    @Column(nullable = false, length = 500)
-    private String farmAddress;
+    @Column(length = 100)
+    private String district;
+
+    @Column(length = 100)
+    private String zilla;
+
+    // Keep the existing database column name. Hibernate does not rename
+    // farm_address to details_address when ddl-auto=update is enabled.
+    @Column(name = "farm_address", nullable = false, length = 500)
+    private String detailsAddress;
 
     @Column(nullable = false, length = 30)
     private String phoneNumber;

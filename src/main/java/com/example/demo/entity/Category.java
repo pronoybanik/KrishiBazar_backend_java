@@ -9,7 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -18,38 +18,22 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "farmer_profiles")
+@Table(name = "categories")
 @Getter
 @Setter
 @NoArgsConstructor
-public class FarmerProfile {
+public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
+    @Column(nullable = false, length = 100)
+    private String name;
 
-    @Column(nullable = false, length = 150)
-    private String farmName;
-
-    @Column(length = 100)
-    private String district;
-
-    @Column(length = 100)
-    private String zilla;
-
-    // Keep this aligned with the existing farmer_profiles schema.
-    @Column(name = "farm_address", nullable = false, length = 500)
-    private String detailsAddress;
-
-    @Column(nullable = false, length = 30)
-    private String phoneNumber;
-
-    @Column(length = 1000)
-    private String description;
+    @ManyToOne
+    @JoinColumn(name = "parent_category_id")
+    private Category parentCategory;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

@@ -1,5 +1,12 @@
 package com.example.demo.service;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.demo.dto.Address;
 import com.example.demo.dto.FarmerApplicationRequest;
 import com.example.demo.dto.FarmerApplicationResponse;
 import com.example.demo.dto.FarmerProfileResponse;
@@ -10,11 +17,6 @@ import com.example.demo.exception.ResourceAlreadyExistsException;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.FarmerApplicationRepository;
 import com.example.demo.repository.FarmerProfileRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
 public class FarmerServiceImpl implements FarmerService {
@@ -61,10 +63,21 @@ public class FarmerServiceImpl implements FarmerService {
     @Override
     @Transactional(readOnly = true)
     public FarmerProfileResponse getProfile(UUID userId) {
-        actorService.requireRole(userId, "FARMER");
+        User user = actorService.requireUser(userId);
         return profileRepository.findByUserId(userId)
                 .map(this::toProfileResponse)
-                .orElseThrow(() -> new ResourceNotFoundException("Farmer profile not found"));
+                .orElseGet(() -> new FarmerProfileResponse(
+                        null,
+                        user.getId(),
+                        user.getName(),
+                        user.getEmail(),
+                        user.getRole(),
+                        null,
+                        null,
+                        null,
+                        null,
+                        user.getCreatedAt(),
+                        user.getUpdatedAt()));
     }
 
     @Override
@@ -75,7 +88,9 @@ public class FarmerServiceImpl implements FarmerService {
                 .orElseThrow(() -> new ResourceNotFoundException("Farmer profile not found"));
         profile.setUser(user);
         profile.setFarmName(request.farmName().trim());
-        profile.setFarmAddress(request.farmAddress().trim());
+        profile.setDistrict(request.address().district().trim());
+        profile.setZilla(request.address().zilla().trim());
+        profile.setDetailsAddress(request.address().detailsAddress().trim());
         profile.setPhoneNumber(request.phoneNumber().trim());
         profile.setDescription(request.description());
         return toProfileResponse(profileRepository.save(profile));
@@ -104,7 +119,9 @@ public class FarmerServiceImpl implements FarmerService {
         FarmerProfile profile = profileRepository.findByUserId(user.getId()).orElseGet(FarmerProfile::new);
         profile.setUser(user);
         profile.setFarmName(application.getFarmName());
-        profile.setFarmAddress(application.getFarmAddress());
+        profile.setDistrict(application.getDistrict());
+        profile.setZilla(application.getZilla());
+        profile.setDetailsAddress(application.getDetailsAddress());
         profile.setPhoneNumber(application.getPhoneNumber());
         profile.setDescription(application.getDescription());
         profileRepository.save(profile);
@@ -132,21 +149,27 @@ public class FarmerServiceImpl implements FarmerService {
 
     private void copyApplicationFields(FarmerApplication application, FarmerApplicationRequest request) {
         application.setFarmName(request.farmName().trim());
-        application.setFarmAddress(request.farmAddress().trim());
+        application.setDistrict(request.address().district().trim());
+        application.setZilla(request.address().zilla().trim());
+        application.setDetailsAddress(request.address().detailsAddress().trim());
         application.setPhoneNumber(request.phoneNumber().trim());
         application.setDescription(request.description());
     }
 
     private FarmerApplicationResponse toApplicationResponse(FarmerApplication application) {
         return new FarmerApplicationResponse(application.getId(), application.getUser().getId(),
-                application.getFarmName(), application.getFarmAddress(), application.getPhoneNumber(),
+            application.getFarmName(), toAddress(application.getDistrict(), application.getZilla(), application.getDetailsAddress()), application.getPhoneNumber(),
                 application.getDescription(), application.getStatus(), application.getCreatedAt(), application.getUpdatedAt());
     }
 
     private FarmerProfileResponse toProfileResponse(FarmerProfile profile) {
         User user = profile.getUser();
-        return new FarmerProfileResponse(profile.getId(), user.getId(), user.getName(), user.getEmail(),
-                profile.getFarmName(), profile.getFarmAddress(), profile.getPhoneNumber(), profile.getDescription(),
+        return new FarmerProfileResponse(profile.getId(), user.getId(), user.getName(), user.getEmail(), user.getRole(),
+                profile.getFarmName(), toAddress(profile.getDistrict(), profile.getZilla(), profile.getDetailsAddress()), profile.getPhoneNumber(), profile.getDescription(),
                 profile.getCreatedAt(), profile.getUpdatedAt());
+    }
+
+    private Address toAddress(String district, String zilla, String detailsAddress) {
+        return new Address(district, zilla, detailsAddress);
     }
 }
