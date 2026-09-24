@@ -10,6 +10,8 @@ public interface CategoryService {
 
     List<CategoryResponse> getAll();
 
+    List<CategoryResponse> getSubcategories(UUID parentCategoryId);
+
     CategoryResponse getById(UUID categoryId);
 
     CategoryResponse create(UUID adminId, CategoryRequest request);

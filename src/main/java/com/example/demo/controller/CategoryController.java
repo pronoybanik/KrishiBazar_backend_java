@@ -38,6 +38,13 @@ public class CategoryController {
                 "Categories fetched successfully", categoryService.getAll()));
     }
 
+    @GetMapping("/{parentCategoryId}/subcategories")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getSubcategories(
+            @PathVariable UUID parentCategoryId) {
+        return ResponseEntity.ok(new ApiResponse<>(true, HttpStatus.OK.value(),
+                "Subcategories fetched successfully", categoryService.getSubcategories(parentCategoryId)));
+    }
+
     @GetMapping("/{categoryId}")
     public ResponseEntity<ApiResponse<CategoryResponse>> getById(@PathVariable UUID categoryId) {
         return ResponseEntity.ok(new ApiResponse<>(true, HttpStatus.OK.value(),

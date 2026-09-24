@@ -231,6 +231,21 @@ Category reads are public. A category with `parentCategoryId: null` is a top-lev
 GET /api/v1/categories
 ```
 
+### Get all subcategories for a parent category
+
+Use the top-level category ID as `parentCategoryId`. This endpoint is public
+and returns an empty `data` array when the parent category has no subcategories.
+
+```text
+GET /api/v1/categories/{parentCategoryId}/subcategories
+```
+
+Example:
+
+```text
+GET /api/v1/categories/aaaa99c0-ec8b-4e93-aa88-9491804220b4/subcategories
+```
+
 ### Get one category
 
 ```text
