@@ -1,0 +1,161 @@
+package com.example.demo.service;
+
+import java.math.BigDecimal;
+import java.util.*;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.demo.dto.*;
+import com.example.demo.entity.*;
+import com.example.demo.exception.*;
+import com.example.demo.repository.*;
+
+@Service
+public class CommerceService {
+    private final ActorService actors;
+    private final ProductRepository products;
+    private final CartItemRepository carts;
+    private final AddressRepository addresses;
+    private final OrderRepository orders;
+
+    public CommerceService(ActorService actors, ProductRepository products, CartItemRepository carts,
+            AddressRepository addresses, OrderRepository orders) {
+        this.actors = actors; this.products = products; this.carts = carts;
+        this.addresses = addresses; this.orders = orders;
+    }
+
+    @Transactional
+    public CartItemResponse addToCart(UUID userId, CartRequest request) {
+        User user = actors.requireUser(userId);
+        Product product = products.findById(request.productId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        CartItem item = carts.findByUserIdAndProductId(userId, product.getId()).orElseGet(CartItem::new);
+        if (item.getId() == null) { item.setUser(user); item.setProduct(product); item.setQuantity(BigDecimal.ZERO); }
+        BigDecimal quantity = item.getQuantity().add(request.quantity());
+        if (quantity.compareTo(product.getQuantity()) > 0) throw new IllegalArgumentException("Requested quantity exceeds available stock");
+        item.setQuantity(quantity);
+        return cartResponse(carts.save(item));
+    }
+
+    @Transactional(readOnly = true)
+    public List<CartItemResponse> getCart(UUID userId) {
+        actors.requireUser(userId);
+        return carts.findAllByUserId(userId).stream().map(this::cartResponse).toList();
+    }
+
+    @Transactional
+    public void removeCartItem(UUID userId, UUID itemId) {
+        CartItem item = carts.findById(itemId).orElseThrow(() -> new ResourceNotFoundException("Cart item not found"));
+        if (!item.getUser().getId().equals(userId)) throw new ForbiddenException("You can only manage your own cart");
+        carts.delete(item);
+    }
+
+    @Transactional
+    public AddressResponse addAddress(UUID userId, Address request) {
+        User user = actors.requireUser(userId);
+        AddressEntity address = new AddressEntity(); address.setUser(user); copy(address, request);
+        return addressResponse(addresses.save(address));
+    }
+
+    @Transactional(readOnly = true)
+    public List<AddressResponse> getAddresses(UUID userId) {
+        actors.requireUser(userId);
+        return addresses.findAllByUserIdOrderByCreatedAtDesc(userId).stream().map(this::addressResponse).toList();
+    }
+
+    @Transactional
+    public AddressResponse updateAddress(UUID userId, UUID id, Address request) {
+        AddressEntity address = ownAddress(userId, id); copy(address, request);
+        return addressResponse(addresses.save(address));
+    }
+
+    @Transactional
+    public void deleteAddress(UUID userId, UUID id) { addresses.delete(ownAddress(userId, id)); }
+
+    @Transactional
+    public OrderResponse confirmOrder(UUID userId, OrderRequest request) {
+        User user = actors.requireUser(userId);
+        AddressEntity address = ownAddress(userId, request.addressId());
+        List<CartItem> cart = carts.findAllByUserId(userId);
+        if (cart.isEmpty()) throw new IllegalStateException("Cart is empty");
+        Order order = new Order(); order.setUser(user); order.setStatus("CONFIRMED");
+        order.setPaymentMethod(request.paymentMethod().trim().toUpperCase(Locale.ROOT));
+        order.setPaymentReference(request.paymentReference());
+        order.setDistrict(address.getDistrict()); order.setZilla(address.getZilla()); order.setDetailsAddress(address.getDetailsAddress());
+        BigDecimal total = BigDecimal.ZERO;
+        for (CartItem cartItem : cart) {
+            Product product = products.findById(cartItem.getProduct().getId()).orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+            if (cartItem.getQuantity().compareTo(product.getQuantity()) > 0) throw new IllegalStateException("Insufficient stock for product: " + product.getName());
+            product.setQuantity(product.getQuantity().subtract(cartItem.getQuantity())); products.save(product);
+            OrderItem item = new OrderItem(); item.setOrder(order); item.setProduct(product); item.setFarmer(product.getFarmer());
+            item.setProductName(product.getName()); item.setUnitPrice(product.getPrice()); item.setQuantity(cartItem.getQuantity());
+            item.setLineTotal(product.getPrice().multiply(cartItem.getQuantity())); order.getItems().add(item); total = total.add(item.getLineTotal());
+        }
+        order.setTotalAmount(total); Order saved = orders.save(order); carts.deleteAll(cart);
+        return orderResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderResponse getOrder(UUID userId, UUID orderId) {
+        Order order = findOrder(orderId); if (!order.getUser().getId().equals(userId)) throw new ForbiddenException("You can only view your own order");
+        return orderResponse(order);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getMyOrders(UUID userId) { actors.requireUser(userId); return orders.findAllByUserIdOrderByCreatedAtDesc(userId).stream().map(this::orderResponse).toList(); }
+
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getAllOrders(UUID adminId) { actors.requireRole(adminId, "ADMIN"); return orders.findAll().stream().sorted(Comparator.comparing(Order::getCreatedAt).reversed()).map(this::orderResponse).toList(); }
+
+    @Transactional(readOnly = true)
+    public OrderAnalyticsResponse getAdminAnalytics(UUID adminId) {
+        actors.requireRole(adminId, "ADMIN");
+        return analytics(orders.findAll(), null);
+    }
+
+    @Transactional
+    public OrderResponse updateStatus(UUID adminId, UUID orderId, String status) {
+        actors.requireRole(adminId, "ADMIN"); Order order = findOrder(orderId); String normalized = status.trim().toUpperCase(Locale.ROOT);
+        if (!Set.of("CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED").contains(normalized)) throw new IllegalArgumentException("Invalid order status");
+        order.setStatus(normalized); return orderResponse(orders.save(order));
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getFarmerOrders(UUID farmerId) { actors.requireRole(farmerId, "FARMER"); return orders.findDistinctByItemsFarmerIdOrderByCreatedAtDesc(farmerId).stream().map(o -> orderResponse(o, farmerId)).toList(); }
+
+    @Transactional(readOnly = true)
+    public OrderAnalyticsResponse getFarmerAnalytics(UUID farmerId) {
+        actors.requireRole(farmerId, "FARMER");
+        return analytics(orders.findDistinctByItemsFarmerIdOrderByCreatedAtDesc(farmerId), farmerId);
+    }
+
+    private AddressEntity ownAddress(UUID userId, UUID id) { return addresses.findByIdAndUserId(id, userId).orElseThrow(() -> new ResourceNotFoundException("Address not found")); }
+    private Order findOrder(UUID id) { return orders.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order not found")); }
+    private void copy(AddressEntity e, Address a) { e.setDistrict(a.district().trim()); e.setZilla(a.zilla().trim()); e.setDetailsAddress(a.detailsAddress().trim()); }
+    private CartItemResponse cartResponse(CartItem i) { BigDecimal total = i.getProduct().getPrice().multiply(i.getQuantity()); return new CartItemResponse(i.getId(), i.getProduct().getId(), i.getProduct().getName(), i.getProduct().getPrice(), i.getQuantity(), total, i.getProduct().getUnit()); }
+    private AddressResponse addressResponse(AddressEntity a) { return new AddressResponse(a.getId(), a.getDistrict(), a.getZilla(), a.getDetailsAddress(), a.getCreatedAt(), a.getUpdatedAt()); }
+    private OrderResponse orderResponse(Order o) { return orderResponse(o, null); }
+    private OrderResponse orderResponse(Order o, UUID farmerId) { AddressResponse a = new AddressResponse(null, o.getDistrict(), o.getZilla(), o.getDetailsAddress(), null, null); List<OrderItemResponse> items = o.getItems().stream().filter(i -> farmerId == null || i.getFarmer().getId().equals(farmerId)).map(i -> new OrderItemResponse(i.getProduct().getId(), i.getFarmer().getId(), i.getProductName(), i.getUnitPrice(), i.getQuantity(), i.getLineTotal(), i.getProduct().getUnit())).toList(); return new OrderResponse(o.getId(), o.getUser().getId(), o.getUser().getName(), o.getStatus(), o.getPaymentMethod(), o.getPaymentReference(), o.getTotalAmount(), a, items, o.getCreatedAt(), o.getUpdatedAt()); }
+
+    private OrderAnalyticsResponse analytics(List<Order> orderList, UUID farmerId) {
+        long totalOrders = orderList.size();
+        BigDecimal totalSales = BigDecimal.ZERO;
+        BigDecimal totalItemsSold = BigDecimal.ZERO;
+        Map<String, Long> byStatus = new TreeMap<>();
+        Map<String, BigDecimal> byPayment = new TreeMap<>();
+        for (Order order : orderList) {
+            byStatus.merge(order.getStatus(), 1L, Long::sum);
+            BigDecimal orderSales = BigDecimal.ZERO;
+            for (OrderItem item : order.getItems()) {
+                if (farmerId == null || item.getFarmer().getId().equals(farmerId)) {
+                    orderSales = orderSales.add(item.getLineTotal());
+                    totalItemsSold = totalItemsSold.add(item.getQuantity());
+                }
+            }
+            totalSales = totalSales.add(orderSales);
+            byPayment.merge(order.getPaymentMethod(), orderSales, BigDecimal::add);
+        }
+        return new OrderAnalyticsResponse(totalOrders, totalSales, totalItemsSold, byStatus, byPayment);
+    }
+}

@@ -77,6 +77,12 @@ public class ProductServiceImpl implements ProductService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ProductResponse getById(UUID productId) {
+        return toResponse(findProduct(productId));
+    }
+
     private Product findProduct(UUID productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));

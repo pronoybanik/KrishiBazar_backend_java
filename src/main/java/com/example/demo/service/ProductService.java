@@ -17,4 +17,6 @@ public interface ProductService {
     List<ProductResponse> getAll();
 
     List<ProductResponse> getAllByFarmerId(UUID farmerId);
+
+    ProductResponse getById(UUID productId);
 }

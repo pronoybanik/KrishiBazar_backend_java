@@ -45,6 +45,12 @@ public class ProductController {
                 "Farmer products fetched successfully", productService.getAllByFarmerId(farmerId)));
     }
 
+    @GetMapping("/{productId}")
+    public ResponseEntity<ApiResponse<ProductResponse>> getById(@PathVariable UUID productId) {
+        return ResponseEntity.ok(new ApiResponse<>(true, HttpStatus.OK.value(),
+                "Product fetched successfully", productService.getById(productId)));
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<ProductResponse>> create(
             Authentication authentication,

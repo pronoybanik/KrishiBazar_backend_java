@@ -369,3 +369,142 @@ Authorization: Bearer <farmer-token>
 GET /api/v1/users
 ```
 
+## Shopping, checkout, and orders
+
+### Get product details
+
+Public endpoint:
+
+```text
+GET /api/v1/products/{productId}
+```
+
+### Cart
+
+Add quantity to the authenticated user's cart. If the product is already in
+the cart, the quantity is increased.
+
+```text
+POST /api/v1/cart/items
+Authorization: Bearer <token>
+```
+
+```json
+{
+  "productId": "550e8400-e29b-41d4-a716-446655440000",
+  "quantity": 2
+}
+```
+
+```text
+GET /api/v1/cart
+DELETE /api/v1/cart/items/{itemId}
+Authorization: Bearer <token>
+```
+
+### Delivery addresses
+
+Addresses belong to the authenticated user and can be reused at checkout.
+
+```text
+POST /api/v1/addresses
+GET /api/v1/addresses
+PUT /api/v1/addresses/{addressId}
+DELETE /api/v1/addresses/{addressId}
+Authorization: Bearer <token>
+```
+
+The POST and PUT body is:
+
+```json
+{
+  "district": "Rangpur",
+  "zilla": "Rangpur",
+  "detailsAddress": "Village Road, Mithapukur"
+}
+```
+
+### Confirm an order and choose payment method
+
+The checkout endpoint creates an order from the complete cart, checks stock,
+decreases product stock, and clears the cart. Supported payment methods are
+`COD` and `BKASH`. This API records the selection; a separate bKash gateway
+integration can be connected later. `paymentReference` is optional and can be
+used for a bKash transaction ID.
+
+```text
+POST /api/v1/orders/confirm
+Authorization: Bearer <token>
+```
+
+```json
+{
+  "addressId": "650e8400-e29b-41d4-a716-446655440000",
+  "paymentMethod": "COD",
+  "paymentReference": null
+}
+```
+
+For bKash, send `"paymentMethod": "BKASH"`.
+
+### Customer order information
+
+```text
+GET /api/v1/orders
+GET /api/v1/orders/{orderId}
+Authorization: Bearer <token>
+```
+
+### Admin order management
+
+Only an `ADMIN` can see all orders or change an order status.
+
+```text
+GET /api/v1/admin/orders
+PATCH /api/v1/admin/orders/{orderId}/status
+Authorization: Bearer <admin-token>
+```
+
+Status body:
+
+```json
+{
+  "status": "PROCESSING"
+}
+```
+
+Allowed statuses are `CONFIRMED`, `PROCESSING`, `SHIPPED`, `DELIVERED`, and
+`CANCELLED`.
+
+### Farmer order information
+
+An approved farmer can see orders containing their own products. This endpoint
+is read-only for farmers; farmers cannot change order status.
+
+```text
+GET /api/v1/farmers/orders
+Authorization: Bearer <farmer-token>
+```
+
+### Admin order analytics
+
+Returns total orders, total sales, total quantity sold, order counts grouped
+by status, and sales grouped by payment method. Only an `ADMIN` can access it.
+
+```text
+GET /api/v1/admin/orders/analytics
+Authorization: Bearer <admin-token>
+```
+
+### Farmer order analytics
+
+Returns analytics only for products owned by the authenticated farmer. A farmer
+cannot see another farmer's sales or change any order status.
+
+```text
+GET /api/v1/farmers/orders/analytics
+Authorization: Bearer <farmer-token>
+```
+
+![alt text](image.png)
+

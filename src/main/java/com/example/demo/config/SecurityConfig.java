@@ -47,6 +47,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/products", "/api/v1/products/",
                             "/api/v1/products/farmer/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories", "/api/v1/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/products/*").permitAll()
+                        .requestMatchers("/api/v1/admin/orders", "/api/v1/admin/orders/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/farmers/orders", "/api/v1/farmers/orders/**").hasRole("FARMER")
                         .anyRequest().authenticated())
                     .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> writeError(response, 401,
