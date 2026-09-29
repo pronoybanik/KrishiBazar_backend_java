@@ -16,4 +16,6 @@ public interface AuthService {
     AuthResponse login(LoginRequest request);
 
     List<UserResponse> getAllUsers();
+
+    UserResponse setUserActive(java.util.UUID adminId, java.util.UUID userId, boolean active);
 }

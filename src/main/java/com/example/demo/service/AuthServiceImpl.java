@@ -88,6 +88,20 @@ public class AuthServiceImpl implements AuthService {
                 .toList();
     }
 
+    @Override
+    @Transactional
+    public UserResponse setUserActive(java.util.UUID adminId, java.util.UUID userId, boolean active) {
+        userRepository.findById(adminId).filter(u -> "ADMIN".equals(u.getRole()) && Boolean.TRUE.equals(u.getActive()))
+                .orElseThrow(() -> new com.example.demo.exception.ForbiddenException("Only active admins can manage users"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new com.example.demo.exception.ResourceNotFoundException("User not found"));
+        if ("ADMIN".equals(user.getRole()) && user.getId().equals(adminId) && !active) {
+            throw new IllegalArgumentException("You cannot deactivate your own admin account");
+        }
+        user.setActive(active);
+        return toUserResponse(userRepository.save(user));
+    }
+
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(java.util.Locale.ROOT);
     }

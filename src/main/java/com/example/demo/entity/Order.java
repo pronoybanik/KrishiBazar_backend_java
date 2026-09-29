@@ -22,6 +22,8 @@ public class Order {
     @Column(nullable = false, length = 100) private String district;
     @Column(nullable = false, length = 100) private String zilla;
     @Column(nullable = false, length = 500) private String detailsAddress;
+    @Column(length = 150) private String addressUserName;
+    @Column(length = 30) private String addressMobileNumber;
     @Column(nullable = false) private LocalDateTime createdAt;
     @Column(nullable = false) private LocalDateTime updatedAt;
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -16,6 +16,9 @@ public class AddressEntity {
     private UUID id;
     @ManyToOne(optional = false) @JoinColumn(name = "user_id", nullable = false)
     private User user;
+    // Nullable keeps ddl-auto=update compatible with addresses created before these fields existed.
+    @Column(length = 150) private String userName;
+    @Column(length = 30) private String mobileNumber;
     @Column(nullable = false, length = 100) private String district;
     @Column(nullable = false, length = 100) private String zilla;
     @Column(nullable = false, length = 500) private String detailsAddress;

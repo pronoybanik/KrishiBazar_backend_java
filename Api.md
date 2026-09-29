@@ -3,6 +3,20 @@
  <!-- Run commend -->
 <!-- (.\mvnw.cmd spring-boot:run) -->
 
+## Local API URL
+
+When running the backend locally, use:
+
+```text
+http://localhost:8080
+```
+
+Example:
+
+```text
+POST http://localhost:8080/api/v1/auth/login
+```
+
 All API responses use this format:
 
 ```json
@@ -12,6 +26,98 @@ All API responses use this format:
 	"message": "Message for the client",
 	"data": {}
 }
+```
+
+## Marketplace search
+
+### List, search, and filter products
+
+```text
+GET /api/v1/products?q=rice&categoryId={uuid}&farmerId={uuid}&minPrice=10&maxPrice=500
+```
+
+All query parameters are optional. `q` searches product name and description;
+`categoryId`, `farmerId`, `minPrice`, and `maxPrice` filter the result. The
+response data is a product array.
+
+## Admin management
+
+The following endpoints require an admin JWT:
+
+```text
+GET    /api/v1/admin/users
+PATCH  /api/v1/admin/users/{userId}/deactivate
+PATCH  /api/v1/admin/users/{userId}/activate
+GET    /api/v1/admin/products
+PUT    /api/v1/admin/products/{productId}
+DELETE /api/v1/admin/products/{productId}
+GET    /api/v1/admin/dashboard/stats
+```
+
+The activate/deactivate endpoints return a `UserResponse`. Admin product update
+uses the same `ProductRequest` body as `PUT /api/v1/products/{productId}` and
+can manage products belonging to any farmer. Dashboard `data` contains:
+
+```json
+{
+  "totalUsers": 10,
+  "activeUsers": 9,
+  "totalFarmers": 4,
+  "totalProducts": 25,
+  "totalOrders": 18,
+  "totalReviews": 12,
+  "openReports": 2,
+  "totalSales": 12500.00
+}
+```
+
+## Ratings and reviews
+
+Reviews are public to read and require a logged-in user to create, update, or
+delete. A user can submit one review per product. `rating` must be from 1 to 5.
+
+```text
+GET    /api/v1/products/{productId}/reviews
+POST   /api/v1/products/{productId}/reviews
+PUT    /api/v1/reviews/{reviewId}
+DELETE /api/v1/reviews/{reviewId}
+```
+
+Create/update body:
+
+```json
+{
+  "rating": 5,
+  "comment": "Fresh and delivered on time"
+}
+```
+
+## Reports
+
+Any authenticated user can submit a report. Listing and changing report status
+require an admin JWT.
+
+```text
+POST  /api/v1/reports
+GET   /api/v1/reports
+PATCH /api/v1/reports/{reportId}
+```
+
+Submit body:
+
+```json
+{
+  "targetType": "PRODUCT",
+  "targetId": "550e8400-e29b-41d4-a716-446655440000",
+  "reason": "Misleading listing",
+  "description": "The product description does not match the item."
+}
+```
+
+Admin status body accepts `OPEN`, `IN_REVIEW`, `RESOLVED`, or `REJECTED`:
+
+```json
+{ "status": "IN_REVIEW" }
 ```
 
 Protected endpoints require an `Authorization: Bearer <token>` header. If the
@@ -118,7 +224,11 @@ curl -X POST http://localhost:8080/api/v1/farmers/application \
 			"detailsAddress": "Village Road, Mithapukur"
 		},
 		"phoneNumber": "01700000000",
-		"description": "Vegetable and rice farm"
+		"description": "Vegetable and rice farm",
+		"nidCard": {
+			"frontImage": "https://example.com/nid-front.jpg",
+			"backImage": "https://example.com/nid-back.jpg"
+		}
 	}'
 ```
 
@@ -131,7 +241,11 @@ curl -X POST http://localhost:8080/api/v1/farmers/application \
 		"detailsAddress": "Village Road, Mithapukur"
 	},
 	"phoneNumber": "01700000000",
-	"description": "Vegetable and rice farm"
+	"description": "Vegetable and rice farm",
+	"nidCard": {
+		"frontImage": "https://example.com/nid-front.jpg",
+		"backImage": "https://example.com/nid-back.jpg"
+	}
 }
 ```
 
@@ -418,6 +532,8 @@ The POST and PUT body is:
 
 ```json
 {
+  "userName": "Rahim Uddin",
+  "mobileNumber": "01700000000",
   "district": "Rangpur",
   "zilla": "Rangpur",
   "detailsAddress": "Village Road, Mithapukur"
@@ -441,7 +557,13 @@ Authorization: Bearer <token>
 {
   "addressId": "650e8400-e29b-41d4-a716-446655440000",
   "paymentMethod": "COD",
-  "paymentReference": null
+  "paymentReference": null,
+  "items": [
+    {
+      "productId": "750e8400-e29b-41d4-a716-446655440000",
+      "quantity": 2
+    }
+  ]
 }
 ```
 

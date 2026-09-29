@@ -24,11 +24,11 @@ public class CommerceController {
     public ResponseEntity<ApiResponse<Void>> removeCart(Authentication a, @PathVariable UUID itemId) { service.removeCartItem(id(a), itemId); return ResponseEntity.ok(new ApiResponse<>(true, 200, "Cart item removed", null)); }
 
     @PostMapping("/addresses")
-    public ResponseEntity<ApiResponse<AddressResponse>> addAddress(Authentication a, @Valid @RequestBody Address request) { return ResponseEntity.status(201).body(new ApiResponse<>(true, 201, "Address added successfully", service.addAddress(id(a), request))); }
+    public ResponseEntity<ApiResponse<AddressResponse>> addAddress(Authentication a, @Valid @RequestBody DeliveryAddressRequest request) { return ResponseEntity.status(201).body(new ApiResponse<>(true, 201, "Address added successfully", service.addAddress(id(a), request))); }
     @GetMapping("/addresses")
     public ResponseEntity<ApiResponse<List<AddressResponse>>> addresses(Authentication a) { return ResponseEntity.ok(new ApiResponse<>(true, 200, "Addresses fetched successfully", service.getAddresses(id(a)))); }
     @PutMapping("/addresses/{addressId}")
-    public ResponseEntity<ApiResponse<AddressResponse>> updateAddress(Authentication a, @PathVariable UUID addressId, @Valid @RequestBody Address request) { return ResponseEntity.ok(new ApiResponse<>(true, 200, "Address updated successfully", service.updateAddress(id(a), addressId, request))); }
+    public ResponseEntity<ApiResponse<AddressResponse>> updateAddress(Authentication a, @PathVariable UUID addressId, @Valid @RequestBody DeliveryAddressRequest request) { return ResponseEntity.ok(new ApiResponse<>(true, 200, "Address updated successfully", service.updateAddress(id(a), addressId, request))); }
     @DeleteMapping("/addresses/{addressId}")
     public ResponseEntity<ApiResponse<Void>> deleteAddress(Authentication a, @PathVariable UUID addressId) { service.deleteAddress(id(a), addressId); return ResponseEntity.ok(new ApiResponse<>(true, 200, "Address deleted successfully", null)); }
 

@@ -12,6 +12,7 @@ public record FarmerApplicationResponse(
         Address address,
         String phoneNumber,
         String description,
+        NidCardImages nidCard,
         Status status,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

@@ -8,6 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +21,10 @@ import com.example.demo.dto.AuthData;
 import com.example.demo.dto.AuthResponse;
 import com.example.demo.dto.FarmerApplicationResponse;
 import com.example.demo.dto.RegisterRequest;
+import com.example.demo.dto.UserResponse;
+import com.example.demo.dto.ProductRequest;
+import com.example.demo.dto.ProductResponse;
+import com.example.demo.service.ProductService;
 import com.example.demo.service.AuthService;
 import com.example.demo.service.FarmerService;
 
@@ -29,10 +36,49 @@ public class AdminController {
 
     private final FarmerService farmerService;
     private final AuthService authService;
+    private final ProductService productService;
 
-    public AdminController(FarmerService farmerService, AuthService authService) {
+    public AdminController(FarmerService farmerService, AuthService authService, ProductService productService) {
         this.farmerService = farmerService;
         this.authService = authService;
+        this.productService = productService;
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> users() {
+        return ResponseEntity.ok(new ApiResponse<>(true, 200, "Users fetched successfully", authService.getAllUsers()));
+    }
+
+    @PatchMapping("/users/{userId}/deactivate")
+    public ResponseEntity<ApiResponse<UserResponse>> deactivate(Authentication a, @PathVariable UUID userId) {
+        return userActive(a, userId, false, "User deactivated successfully");
+    }
+
+    @PatchMapping("/users/{userId}/activate")
+    public ResponseEntity<ApiResponse<UserResponse>> activate(Authentication a, @PathVariable UUID userId) {
+        return userActive(a, userId, true, "User activated successfully");
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> products() {
+        return ResponseEntity.ok(new ApiResponse<>(true, 200, "Products fetched successfully", productService.getAll()));
+    }
+
+    @PutMapping("/products/{productId}")
+    public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(Authentication a, @PathVariable UUID productId,
+            @Valid @RequestBody ProductRequest request) {
+        return ResponseEntity.ok(new ApiResponse<>(true, 200, "Product updated successfully",
+                productService.adminUpdate(userId(a), productId, request)));
+    }
+
+    @DeleteMapping("/products/{productId}")
+    public ResponseEntity<ApiResponse<Void>> deleteProduct(Authentication a, @PathVariable UUID productId) {
+        productService.adminDelete(userId(a), productId);
+        return ResponseEntity.ok(new ApiResponse<>(true, 200, "Product deleted successfully", null));
+    }
+
+    private ResponseEntity<ApiResponse<UserResponse>> userActive(Authentication a, UUID id, boolean active, String message) {
+        return ResponseEntity.ok(new ApiResponse<>(true, 200, message, authService.setUserActive(userId(a), id, active)));
     }
 
     @PostMapping("/users")
