@@ -38,6 +38,15 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<CategoryResponse> getSubcategories(UUID parentCategoryId) {
+        findCategory(parentCategoryId);
+        return categoryRepository.findAllByParentCategoryIdOrderByNameAsc(parentCategoryId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public CategoryResponse getById(UUID categoryId) {
         return toResponse(findCategory(categoryId));
     }

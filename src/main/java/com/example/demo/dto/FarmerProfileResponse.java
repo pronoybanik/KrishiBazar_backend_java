@@ -13,6 +13,7 @@ public record FarmerProfileResponse(
         Address address,
         String phoneNumber,
         String description,
+        NidCardImages nidCard,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

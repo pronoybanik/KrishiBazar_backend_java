@@ -63,10 +63,35 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponse> getAll() {
+    public List<ProductResponse> getAll(String q, UUID categoryId, UUID farmerId,
+            java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice) {
+        String query = q == null ? "" : q.trim().toLowerCase();
         return productRepository.findAllByOrderByCreatedAtDesc().stream()
+                .filter(p -> query.isBlank() || p.getName().toLowerCase().contains(query)
+                        || (p.getDescription() != null && p.getDescription().toLowerCase().contains(query)))
+                .filter(p -> categoryId == null || p.getCategory().getId().equals(categoryId))
+                .filter(p -> farmerId == null || p.getFarmer().getId().equals(farmerId))
+                .filter(p -> minPrice == null || p.getPrice().compareTo(minPrice) >= 0)
+                .filter(p -> maxPrice == null || p.getPrice().compareTo(maxPrice) <= 0)
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public ProductResponse adminUpdate(UUID adminId, UUID productId, ProductRequest request) {
+        actorService.requireRole(adminId, "ADMIN");
+        Product product = findProduct(productId);
+        product.setCategory(findCategory(request.categoryId()));
+        copyFields(product, request);
+        return toResponse(productRepository.save(product));
+    }
+
+    @Override
+    @Transactional
+    public void adminDelete(UUID adminId, UUID productId) {
+        actorService.requireRole(adminId, "ADMIN");
+        productRepository.delete(findProduct(productId));
     }
 
     @Override
@@ -75,6 +100,12 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findAllByFarmerIdOrderByCreatedAtDesc(farmerId).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProductResponse getById(UUID productId) {
+        return toResponse(findProduct(productId));
     }
 
     private Product findProduct(UUID productId) {

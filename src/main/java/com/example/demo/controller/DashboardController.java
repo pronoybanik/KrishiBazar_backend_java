@@ -1,0 +1,3 @@
+package com.example.demo.controller;
+import java.util.UUID; import org.springframework.http.ResponseEntity; import org.springframework.security.core.Authentication; import org.springframework.web.bind.annotation.*; import com.example.demo.dto.*; import com.example.demo.service.DashboardService;
+@RestController @RequestMapping("/api/v1/admin/dashboard") public class DashboardController { private final DashboardService service; public DashboardController(DashboardService s){service=s;} @GetMapping("/stats") public ResponseEntity<ApiResponse<DashboardStatsResponse>> stats(Authentication a){return ResponseEntity.ok(new ApiResponse<>(true,200,"Dashboard statistics fetched successfully",service.stats(UUID.fromString(a.getName()))));} }

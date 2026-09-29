@@ -14,7 +14,15 @@ public interface ProductService {
 
     void delete(UUID farmerId, UUID productId);
 
-    List<ProductResponse> getAll();
+    List<ProductResponse> getAll(String q, UUID categoryId, UUID farmerId,
+            java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice);
+
+    default List<ProductResponse> getAll() { return getAll(null, null, null, null, null); }
 
     List<ProductResponse> getAllByFarmerId(UUID farmerId);
+
+    ProductResponse getById(UUID productId);
+
+    ProductResponse adminUpdate(UUID adminId, UUID productId, ProductRequest request);
+    void adminDelete(UUID adminId, UUID productId);
 }

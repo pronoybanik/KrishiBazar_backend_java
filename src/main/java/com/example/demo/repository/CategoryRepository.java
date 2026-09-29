@@ -11,6 +11,8 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     List<Category> findAllByOrderByNameAsc();
 
+    List<Category> findAllByParentCategoryIdOrderByNameAsc(UUID parentCategoryId);
+
     boolean existsByNameIgnoreCaseAndParentCategoryId(String name, UUID parentCategoryId);
 
     boolean existsByNameIgnoreCaseAndParentCategoryIsNull(String name);

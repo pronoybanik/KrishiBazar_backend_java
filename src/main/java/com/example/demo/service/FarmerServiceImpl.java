@@ -10,6 +10,7 @@ import com.example.demo.dto.Address;
 import com.example.demo.dto.FarmerApplicationRequest;
 import com.example.demo.dto.FarmerApplicationResponse;
 import com.example.demo.dto.FarmerProfileResponse;
+import com.example.demo.dto.NidCardImages;
 import com.example.demo.entity.FarmerApplication;
 import com.example.demo.entity.FarmerProfile;
 import com.example.demo.entity.User;
@@ -76,6 +77,7 @@ public class FarmerServiceImpl implements FarmerService {
                         null,
                         null,
                         null,
+                        null,
                         user.getCreatedAt(),
                         user.getUpdatedAt()));
     }
@@ -93,6 +95,8 @@ public class FarmerServiceImpl implements FarmerService {
         profile.setDetailsAddress(request.address().detailsAddress().trim());
         profile.setPhoneNumber(request.phoneNumber().trim());
         profile.setDescription(request.description());
+        profile.setNidFrontImage(request.nidCard().frontImage().trim());
+        profile.setNidBackImage(request.nidCard().backImage().trim());
         return toProfileResponse(profileRepository.save(profile));
     }
 
@@ -124,6 +128,8 @@ public class FarmerServiceImpl implements FarmerService {
         profile.setDetailsAddress(application.getDetailsAddress());
         profile.setPhoneNumber(application.getPhoneNumber());
         profile.setDescription(application.getDescription());
+        profile.setNidFrontImage(application.getNidFrontImage());
+        profile.setNidBackImage(application.getNidBackImage());
         profileRepository.save(profile);
 
         application.setStatus(FarmerApplication.Status.APPROVED);
@@ -154,22 +160,29 @@ public class FarmerServiceImpl implements FarmerService {
         application.setDetailsAddress(request.address().detailsAddress().trim());
         application.setPhoneNumber(request.phoneNumber().trim());
         application.setDescription(request.description());
+        application.setNidFrontImage(request.nidCard().frontImage().trim());
+        application.setNidBackImage(request.nidCard().backImage().trim());
     }
 
     private FarmerApplicationResponse toApplicationResponse(FarmerApplication application) {
         return new FarmerApplicationResponse(application.getId(), application.getUser().getId(),
             application.getFarmName(), toAddress(application.getDistrict(), application.getZilla(), application.getDetailsAddress()), application.getPhoneNumber(),
-                application.getDescription(), application.getStatus(), application.getCreatedAt(), application.getUpdatedAt());
+                application.getDescription(), toNidCard(application.getNidFrontImage(), application.getNidBackImage()), application.getStatus(), application.getCreatedAt(), application.getUpdatedAt());
     }
 
     private FarmerProfileResponse toProfileResponse(FarmerProfile profile) {
         User user = profile.getUser();
         return new FarmerProfileResponse(profile.getId(), user.getId(), user.getName(), user.getEmail(), user.getRole(),
                 profile.getFarmName(), toAddress(profile.getDistrict(), profile.getZilla(), profile.getDetailsAddress()), profile.getPhoneNumber(), profile.getDescription(),
+                toNidCard(profile.getNidFrontImage(), profile.getNidBackImage()),
                 profile.getCreatedAt(), profile.getUpdatedAt());
     }
 
     private Address toAddress(String district, String zilla, String detailsAddress) {
         return new Address(district, zilla, detailsAddress);
+    }
+
+    private NidCardImages toNidCard(String frontImage, String backImage) {
+        return frontImage == null && backImage == null ? null : new NidCardImages(frontImage, backImage);
     }
 }

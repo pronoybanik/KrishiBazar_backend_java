@@ -51,6 +51,12 @@ public class FarmerProfile {
     @Column(length = 1000)
     private String description;
 
+    @Column(name = "nid_front_image_url", length = 500)
+    private String nidFrontImage;
+
+    @Column(name = "nid_back_image_url", length = 500)
+    private String nidBackImage;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 

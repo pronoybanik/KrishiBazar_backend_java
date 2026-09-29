@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.ApiResponse;
@@ -33,9 +34,14 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAll() {
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAll(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) UUID farmerId,
+            @RequestParam(required = false) java.math.BigDecimal minPrice,
+            @RequestParam(required = false) java.math.BigDecimal maxPrice) {
         return ResponseEntity.ok(new ApiResponse<>(true, HttpStatus.OK.value(),
-                "Products fetched successfully", productService.getAll()));
+                "Products fetched successfully", productService.getAll(q, categoryId, farmerId, minPrice, maxPrice)));
     }
 
     @GetMapping("/farmer/{farmerId}")
@@ -43,6 +49,12 @@ public class ProductController {
             @PathVariable UUID farmerId) {
         return ResponseEntity.ok(new ApiResponse<>(true, HttpStatus.OK.value(),
                 "Farmer products fetched successfully", productService.getAllByFarmerId(farmerId)));
+    }
+
+    @GetMapping("/{productId}")
+    public ResponseEntity<ApiResponse<ProductResponse>> getById(@PathVariable UUID productId) {
+        return ResponseEntity.ok(new ApiResponse<>(true, HttpStatus.OK.value(),
+                "Product fetched successfully", productService.getById(productId)));
     }
 
     @PostMapping
