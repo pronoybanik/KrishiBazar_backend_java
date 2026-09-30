@@ -31,8 +31,8 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional(readOnly = true)
     public List<CategoryResponse> getAll() {
-        return categoryRepository.findAllByOrderByNameAsc().stream()
-                .map(this::toResponse)
+        return categoryRepository.findAllByParentCategoryIsNullOrderByNameAsc().stream()
+                .map(category -> toResponse(category, true))
                 .toList();
     }
 
@@ -41,14 +41,14 @@ public class CategoryServiceImpl implements CategoryService {
     public List<CategoryResponse> getSubcategories(UUID parentCategoryId) {
         findCategory(parentCategoryId);
         return categoryRepository.findAllByParentCategoryIdOrderByNameAsc(parentCategoryId).stream()
-                .map(this::toResponse)
+                .map(category -> toResponse(category, false))
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public CategoryResponse getById(UUID categoryId) {
-        return toResponse(findCategory(categoryId));
+        return toResponse(findCategory(categoryId), true);
     }
 
     @Override
@@ -61,7 +61,7 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = new Category();
         category.setName(request.name().trim());
         category.setParentCategory(parentCategory);
-        return toResponse(categoryRepository.save(category));
+        return toResponse(categoryRepository.save(category), false);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         category.setName(request.name().trim());
         category.setParentCategory(parentCategory);
-        return toResponse(categoryRepository.save(category));
+        return toResponse(categoryRepository.save(category), true);
     }
 
     @Override
@@ -131,11 +131,15 @@ public class CategoryServiceImpl implements CategoryService {
         }
     }
 
-    private CategoryResponse toResponse(Category category) {
+    private CategoryResponse toResponse(Category category, boolean includeChildren) {
         Category parent = category.getParentCategory();
         return new CategoryResponse(category.getId(), category.getName(),
                 parent == null ? null : parent.getId(),
-                parent == null ? null : parent.getName(),
-                category.getCreatedAt(), category.getUpdatedAt());
+                category.getCreatedAt(), category.getUpdatedAt(),
+                includeChildren
+                        ? categoryRepository.findAllByParentCategoryIdOrderByNameAsc(category.getId()).stream()
+                                .map(child -> toResponse(child, false))
+                                .toList()
+                        : null);
     }
 }

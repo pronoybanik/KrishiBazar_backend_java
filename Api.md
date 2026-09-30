@@ -345,6 +345,10 @@ Category reads are public. A category with `parentCategoryId: null` is a top-lev
 GET /api/v1/categories
 ```
 
+This returns top-level categories with their subcategories nested in `children`.
+Each child contains `id`, `name`, `parentCategoryId`, `createdAt`, and
+`updatedAt`.
+
 ### Get all subcategories for a parent category
 
 Use the top-level category ID as `parentCategoryId`. This endpoint is public
@@ -399,6 +403,56 @@ A category cannot be deleted while it has subcategories or products assigned to 
 
 ```text
 DELETE /api/v1/categories/{categoryId}
+Authorization: Bearer <admin-token>
+```
+
+## Blogs
+
+Blog read APIs are public. Creating, updating, and deleting blogs require an
+`ADMIN` bearer token.
+
+### Get all blogs
+
+```text
+GET /api/v1/blogs
+```
+
+### Get one blog
+
+```text
+GET /api/v1/blogs/{blogId}
+```
+
+### Create a blog
+
+```text
+POST /api/v1/blogs
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+```
+
+```json
+{
+  "title": "How to grow healthy tomatoes",
+  "content": "Use healthy soil, adequate sunlight, and regular watering.",
+  "imageUrl": "https://example.com/tomato-blog.jpg"
+}
+```
+
+### Update a blog
+
+```text
+PUT /api/v1/blogs/{blogId}
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+```
+
+The request body is the same as the create request.
+
+### Delete a blog
+
+```text
+DELETE /api/v1/blogs/{blogId}
 Authorization: Bearer <admin-token>
 ```
 
@@ -492,6 +546,55 @@ Public endpoint:
 ```text
 GET /api/v1/products/{productId}
 ```
+
+Example:
+
+```text
+GET http://localhost:8080/api/v1/products/750e8400-e29b-41d4-a716-446655440000
+```
+
+The response contains one product with category information and `farmer`,
+which contains the farmer's public profile information. Sensitive NID images
+are not included in this public response.
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Product fetched successfully",
+  "data": {
+    "id": "750e8400-e29b-41d4-a716-446655440000",
+    "farmerId": "850e8400-e29b-41d4-a716-446655440000",
+    "farmerName": "Rahim Uddin",
+    "farmer": {
+      "id": "850e8400-e29b-41d4-a716-446655440000",
+      "name": "Rahim Uddin",
+      "email": "rahim@example.com",
+      "farmName": "Green Valley Farm",
+      "address": {
+        "district": "Rangpur",
+        "zilla": "Rangpur",
+        "detailsAddress": "Village Road, Mithapukur"
+      },
+      "phoneNumber": "01700000000",
+      "description": "Organic vegetables and rice farm"
+    },
+    "categoryId": "550e8400-e29b-41d4-a716-446655440000",
+    "categoryName": "Vegetables",
+    "parentCategoryId": null,
+    "name": "Tomato",
+    "description": "Fresh farm tomatoes",
+    "price": 80.00,
+    "quantity": 50,
+    "unit": "kg",
+    "imageUrl": "https://example.com/tomato.jpg",
+    "createdAt": "2026-09-24T23:55:00",
+    "updatedAt": "2026-09-24T23:55:00"
+  }
+}
+```
+
+If the product ID does not exist, the API returns `Product not found`.
 
 ### Cart
 

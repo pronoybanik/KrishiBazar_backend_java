@@ -8,6 +8,7 @@ public record ProductResponse(
         UUID id,
         UUID farmerId,
         String farmerName,
+        ProductFarmerResponse farmer,
         UUID categoryId,
         String categoryName,
         UUID parentCategoryId,

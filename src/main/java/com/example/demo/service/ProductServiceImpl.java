@@ -7,13 +7,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.dto.ProductRequest;
+import com.example.demo.dto.Address;
+import com.example.demo.dto.ProductFarmerResponse;
 import com.example.demo.dto.ProductResponse;
 import com.example.demo.entity.Category;
+import com.example.demo.entity.FarmerProfile;
 import com.example.demo.entity.Product;
 import com.example.demo.entity.User;
 import com.example.demo.exception.ForbiddenException;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.CategoryRepository;
+import com.example.demo.repository.FarmerProfileRepository;
 import com.example.demo.repository.ProductRepository;
 
 @Service
@@ -22,12 +26,14 @@ public class ProductServiceImpl implements ProductService {
     private final ActorService actorService;
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final FarmerProfileRepository farmerProfileRepository;
 
     public ProductServiceImpl(ActorService actorService, ProductRepository productRepository,
-            CategoryRepository categoryRepository) {
+            CategoryRepository categoryRepository, FarmerProfileRepository farmerProfileRepository) {
         this.actorService = actorService;
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.farmerProfileRepository = farmerProfileRepository;
     }
 
     @Override
@@ -135,10 +141,22 @@ public class ProductServiceImpl implements ProductService {
 
     private ProductResponse toResponse(Product product) {
         Category category = product.getCategory();
-        return new ProductResponse(product.getId(), product.getFarmer().getId(), product.getFarmer().getName(),
+        User farmer = product.getFarmer();
+        ProductFarmerResponse farmerDetails = farmerProfileRepository.findByUserId(farmer.getId())
+                .map(this::toFarmerResponse)
+                .orElseGet(() -> new ProductFarmerResponse(farmer.getId(), farmer.getName(), farmer.getEmail(),
+                        null, null, null, null));
+        return new ProductResponse(product.getId(), farmer.getId(), farmer.getName(), farmerDetails,
             category.getId(), category.getName(),
             category.getParentCategory() == null ? null : category.getParentCategory().getId(),
                 product.getName(), product.getDescription(), product.getPrice(), product.getQuantity(),
                 product.getUnit(), product.getImageUrl(), product.getCreatedAt(), product.getUpdatedAt());
+    }
+
+    private ProductFarmerResponse toFarmerResponse(FarmerProfile profile) {
+        User farmer = profile.getUser();
+        return new ProductFarmerResponse(farmer.getId(), farmer.getName(), farmer.getEmail(), profile.getFarmName(),
+                new Address(profile.getDistrict(), profile.getZilla(), profile.getDetailsAddress()),
+                profile.getPhoneNumber(), profile.getDescription());
     }
 }
