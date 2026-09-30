@@ -81,7 +81,11 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:5173"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        // The frontend sends this header on every request (it is useful for
+        // ngrok deployments), so it must also be allowed during the browser's
+        // CORS preflight request when running locally.
+        configuration.setAllowedHeaders(List.of(
+                "Authorization", "Content-Type", "Accept", "ngrok-skip-browser-warning"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
