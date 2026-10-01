@@ -8,6 +8,8 @@ public record OrderAnalyticsResponse(
         BigDecimal totalSales,
         BigDecimal totalItemsSold,
         Map<String, Long> ordersByStatus,
-        Map<String, BigDecimal> salesByPaymentMethod
+        Map<String, BigDecimal> salesByPaymentMethod,
+        BigDecimal deliveredSales,
+        long deliveredOrders
 ) {
 }

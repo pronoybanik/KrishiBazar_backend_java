@@ -16,5 +16,9 @@ public class FarmerOrderController {
     public ResponseEntity<ApiResponse<List<OrderResponse>>> orders(Authentication a) { return ResponseEntity.ok(new ApiResponse<>(true, 200, "Farmer orders fetched successfully", service.getFarmerOrders(id(a)))); }
     @GetMapping("/analytics")
     public ResponseEntity<ApiResponse<OrderAnalyticsResponse>> analytics(Authentication a) { return ResponseEntity.ok(new ApiResponse<>(true, 200, "Farmer order analytics fetched successfully", service.getFarmerAnalytics(id(a)))); }
+    @GetMapping("/dashboard")
+    public ResponseEntity<ApiResponse<FarmerDashboardStatsResponse>> dashboard(Authentication a) { return ResponseEntity.ok(new ApiResponse<>(true, 200, "Farmer dashboard statistics fetched successfully", service.getFarmerDashboard(id(a)))); }
+    @PatchMapping("/{orderId}/status")
+    public ResponseEntity<ApiResponse<OrderResponse>> status(Authentication a, @PathVariable UUID orderId, @RequestBody Map<String, String> body) { return ResponseEntity.ok(new ApiResponse<>(true, 200, "Farmer order status updated successfully", service.updateFarmerStatus(id(a), orderId, body.getOrDefault("status", "")))); }
     private UUID id(Authentication a) { return UUID.fromString(a.getName()); }
 }

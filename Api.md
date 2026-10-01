@@ -698,23 +698,29 @@ Status body:
 }
 ```
 
-Allowed statuses are `CONFIRMED`, `PROCESSING`, `SHIPPED`, `DELIVERED`, and
-`CANCELLED`.
+Allowed statuses are `PENDING`, `PICKUP`, `PROCESSING`, `SHIPPED`, `DELIVERED`,
+and `CANCELLED`. New orders start as `PENDING`.
 
 ### Farmer order information
 
-An approved farmer can see orders containing their own products. This endpoint
-is read-only for farmers; farmers cannot change order status.
+An approved farmer can see orders containing their own products, including safe
+farmer profile details on each order item. Farmers can mark their own orders as
+`PICKUP`; admins can move orders through all statuses.
 
 ```text
 GET /api/v1/farmers/orders
+PATCH /api/v1/farmers/orders/{orderId}/status
+GET /api/v1/farmers/orders/dashboard
 Authorization: Bearer <farmer-token>
 ```
+
+Farmer pickup status body: `{ "status": "PICKUP" }`.
 
 ### Admin order analytics
 
 Returns total orders, total sales, total quantity sold, order counts grouped
-by status, and sales grouped by payment method. Only an `ADMIN` can access it.
+by status, sales grouped by payment method, delivered sales, and delivered
+order count. Only an `ADMIN` can access it.
 
 ```text
 GET /api/v1/admin/orders/analytics
